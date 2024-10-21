@@ -24,10 +24,17 @@ const authenticateToken = (req, res, next) => {
 router.post("/send", authenticateToken, async (req, res) => {
   const { content } = req.body;
 
+  // Проверка наличия контента сообщения
+  if (!content || typeof content !== "string") {
+    return res.status(400).json({ message: "Контент сообщения обязателен" });
+  }
+
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user.userId }
     });
+
+    // Проверка, существует ли пользователь
     if (!user) {
       return res.status(404).json({ message: "Пользователь не найден" });
     }
@@ -41,7 +48,8 @@ router.post("/send", authenticateToken, async (req, res) => {
 
     res.status(201).json({ message: "Сообщение отправлено", newMessage });
   } catch (error) {
-    res.status(500).json({ message: "Ошибка отправки сообщения", error });
+    console.error("Ошибка отправки сообщения:", error);
+    res.status(500).json({ message: "Ошибка отправки сообщения" });
   }
 });
 
@@ -58,7 +66,19 @@ router.get("/messages", authenticateToken, async (req, res) => {
     });
     res.status(200).json(messages);
   } catch (error) {
-    res.status(500).json({ message: "Ошибка получения сообщений", error });
+    console.error("Ошибка получения сообщений:", error);
+    res.status(500).json({ message: "Ошибка получения сообщений" });
+  }
+});
+
+// Очистка сообщений
+router.delete("/clear", authenticateToken, async (req, res) => {
+  try {
+    await prisma.message.deleteMany(); // Удаляем все сообщения
+    res.status(204).send(); // Успешно, без содержимого
+  } catch (error) {
+    console.error("Ошибка очистки сообщений:", error);
+    res.status(500).json({ message: "Ошибка очистки сообщений" });
   }
 });
 
