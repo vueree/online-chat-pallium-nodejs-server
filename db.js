@@ -1,15 +1,17 @@
-import mongoose from "mongoose";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 const connectDB = async () => {
+  console.log("DATABASE_URL:", process.env.DATABASE_URL);
+
   try {
-    const mongoURI =
-      process.env.MONGO_URI || "mongodb://localhost:27017/mydatabase";
-    await mongoose.connect(mongoURI);
-    console.log("MongoDB connected");
+    await prisma.$connect();
+    console.log("Database connected");
   } catch (error) {
     console.error("Database connection error:", error);
     process.exit(1);
   }
 };
 
-export default connectDB;
+export { prisma, connectDB };

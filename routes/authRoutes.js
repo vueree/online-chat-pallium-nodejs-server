@@ -1,7 +1,7 @@
 import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import User from "../models/user.js";
+import { prisma } from "../prismaClient.js"; // добавлено .js
 
 const router = express.Router();
 
@@ -10,20 +10,23 @@ router.post("/register", async (req, res) => {
   const { username, password, encryptionKey } = req.body;
 
   try {
-    const existingUser = await User.findOne({ username });
+    const existingUser = await prisma.user.findUnique({
+      where: { username }
+    });
     if (existingUser) {
       return res.status(400).json({ message: "Пользователь уже существует" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({
-      username,
-      password: hashedPassword,
-      encryptionKey
+    const newUser = await prisma.user.create({
+      data: {
+        username,
+        password: hashedPassword,
+        encryptionKey
+      }
     });
 
-    await newUser.save();
-    res.status(201).json({ message: "Пользователь зарегистрирован" });
+    res.status(201).json({ message: "Пользователь зарегистрирован", newUser });
   } catch (error) {
     res.status(500).json({ message: "Ошибка регистрации", error });
   }
@@ -34,7 +37,9 @@ router.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    const user = await User.findOne({ username });
+    const user = await prisma.user.findUnique({
+      where: { username }
+    });
     if (!user) {
       return res.status(400).json({ message: "Неверные учетные данные" });
     }
@@ -44,7 +49,7 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Неверные учетные данные" });
     }
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
       expiresIn: "1h"
     });
 

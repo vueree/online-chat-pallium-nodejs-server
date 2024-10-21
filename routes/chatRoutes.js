@@ -1,7 +1,6 @@
 import express from "express";
 import jwt from "jsonwebtoken";
-import Message from "../models/Message.js";
-import User from "../models/user.js";
+import { prisma } from "../prismaClient.js"; // добавлено .js
 
 const router = express.Router();
 
@@ -26,18 +25,21 @@ router.post("/send", authenticateToken, async (req, res) => {
   const { content } = req.body;
 
   try {
-    const user = await User.findById(req.user.userId);
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId }
+    });
     if (!user) {
       return res.status(404).json({ message: "Пользователь не найден" });
     }
 
-    const newMessage = new Message({
-      sender: user._id,
-      content
+    const newMessage = await prisma.message.create({
+      data: {
+        senderId: user.id,
+        content
+      }
     });
 
-    await newMessage.save();
-    res.status(201).json({ message: "Сообщение отправлено" });
+    res.status(201).json({ message: "Сообщение отправлено", newMessage });
   } catch (error) {
     res.status(500).json({ message: "Ошибка отправки сообщения", error });
   }
@@ -46,9 +48,14 @@ router.post("/send", authenticateToken, async (req, res) => {
 // Получение всех сообщений
 router.get("/messages", authenticateToken, async (req, res) => {
   try {
-    const messages = await Message.find()
-      .populate("sender", "username")
-      .sort({ timestamp: -1 });
+    const messages = await prisma.message.findMany({
+      include: {
+        sender: {
+          select: { username: true }
+        }
+      },
+      orderBy: { timestamp: "desc" }
+    });
     res.status(200).json(messages);
   } catch (error) {
     res.status(500).json({ message: "Ошибка получения сообщений", error });
