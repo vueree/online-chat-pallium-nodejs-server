@@ -29,15 +29,17 @@ app.use("/api/auth", authRoutes);
 app.use("/api/chat", chatRoutes);
 
 const PORT = process.env.PORT || 3000;
+
 // Create HTTP server
 const httpServer = createServer(app);
 
-// Create Socket.IO instance
+// Create Socket.IO instance with namespace
 const io = new Server(httpServer, { cors: corsOptions });
 
-// Handle WebSocket connections
-io.on("connection", (socket) => {
-  console.log("New WebSocket connection");
+// Handle WebSocket connections for the 'chat' namespace
+const chatNamespace = io.of("/chat");
+chatNamespace.on("connection", (socket) => {
+  console.log("New WebSocket connection in /chat namespace");
 });
 
 // Start server function
