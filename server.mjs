@@ -1,40 +1,56 @@
 import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
-import { connectDB } from "./prismaClient.js"; // добавлено .js
+import { createServer } from "http";
+import { Server } from "socket.io";
+import { prisma } from "./prismaClient.js";
 import authRoutes from "./routes/authRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
-// Middleware для обработки JSON
+// Middleware for JSON processing
 app.use(express.json());
 
-// Настройки CORS
+// CORS settings
 const corsOptions = {
-  origin: "*", // временно разрешить все источники для отладки
-  methods: ["GET", "POST", "DELETE"], // разрешенные методы
-  credentials: true // разрешить куки
+  origin: ["http://localhost:5173"],
+  methods: ["GET", "POST"],
+  credentials: true
 };
 
-// Применение CORS middleware
+// Apply CORS middleware
 app.use(cors(corsOptions));
 
-// Подключение маршрутов
+// Route connections
 app.use("/api/auth", authRoutes);
 app.use("/api/chat", chatRoutes);
 
-// Функция для запуска сервера
-const startServer = async () => {
-  await connectDB(); // Подключение к базе данных
+const PORT = process.env.PORT || 3000;
+// Create HTTP server
+const httpServer = createServer(app);
 
-  app.listen(PORT, () => {
-    console.log(`Сервер запущен на порту ${PORT}`);
-  });
+// Create Socket.IO instance
+const io = new Server(httpServer, { cors: corsOptions });
+
+// Handle WebSocket connections
+io.on("connection", (socket) => {
+  console.log("New WebSocket connection");
+});
+
+// Start server function
+const startServer = async () => {
+  try {
+    await prisma.$connect(); // Подключение к базе данных
+    httpServer.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error("Error connecting to the database:", error);
+  }
 };
 
-// Запуск сервера
+// Start server
 startServer();

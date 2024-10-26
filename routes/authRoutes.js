@@ -1,14 +1,14 @@
+// routes/authRoutes.js
 import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { prisma } from "../prismaClient.js"; // добавлено .js
+import { prisma } from "../prismaClient.js"; // Импортируйте prisma
 
 const router = express.Router();
 
 // Регистрация пользователя
 router.post("/register", async (req, res) => {
-  const { username, password, encryptionKey } = req.body;
-
+  const { username, password } = req.body;
   try {
     const existingUser = await prisma.user.findUnique({
       where: { username }
@@ -21,14 +21,16 @@ router.post("/register", async (req, res) => {
     const newUser = await prisma.user.create({
       data: {
         username,
-        password: hashedPassword,
-        encryptionKey
+        password: hashedPassword
       }
     });
 
     res.status(201).json({ message: "Пользователь зарегистрирован", newUser });
   } catch (error) {
-    res.status(500).json({ message: "Ошибка регистрации", error });
+    console.error("Ошибка регистрации:", error);
+    res
+      .status(500)
+      .json({ message: "Ошибка регистрации", error: error.message });
   }
 });
 

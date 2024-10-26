@@ -1,6 +1,6 @@
 import express from "express";
 import jwt from "jsonwebtoken";
-import { prisma } from "../prismaClient.js"; // добавлено .js
+import { prisma } from "../prismaClient.js";
 
 const router = express.Router();
 
@@ -55,6 +55,7 @@ router.post("/send", authenticateToken, async (req, res) => {
 
 // Получение всех сообщений
 router.get("/messages", authenticateToken, async (req, res) => {
+  console.log("Получение сообщений...");
   try {
     const messages = await prisma.message.findMany({
       include: {
@@ -64,6 +65,7 @@ router.get("/messages", authenticateToken, async (req, res) => {
       },
       orderBy: { timestamp: "desc" }
     });
+    console.log("Сообщения успешно получены:", messages);
     res.status(200).json(messages);
   } catch (error) {
     console.error("Ошибка получения сообщений:", error);

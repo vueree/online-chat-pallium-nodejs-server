@@ -1,9 +1,13 @@
-import mongoose from "mongoose";
+import { prisma } from "../prismaClient.js";
 
-const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  encryptionKey: { type: String, required: true } // Ключ шифрования для сообщений
-});
+export const createUser = async (username, password) => {
+  return prisma.user.create({
+    data: { username, password }
+  });
+};
 
-export default mongoose.model("User", userSchema);
+export const getUserByUsername = async (username) => {
+  return prisma.user.findUnique({
+    where: { username }
+  });
+};

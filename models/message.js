@@ -1,9 +1,17 @@
-import mongoose from "mongoose";
+import { prisma } from "../prismaClient.js";
 
-const messageSchema = new mongoose.Schema({
-  sender: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  content: { type: String, required: true },
-  timestamp: { type: Date, default: Date.now }
-});
+export const createMessage = async (senderId, content) => {
+  return prisma.message.create({
+    data: {
+      senderId,
+      content
+    }
+  });
+};
 
-export default mongoose.model("Message", messageSchema);
+export const getMessagesByUserId = async (userId) => {
+  return prisma.message.findMany({
+    where: { senderId: userId },
+    include: { sender: true }
+  });
+};
