@@ -16,7 +16,8 @@ app.use(express.json());
 
 // CORS settings
 const corsOptions = {
-  origin: ["http://localhost:5173"],
+  // origin: ["http://localhost:5173"],
+  origin: ["https://pillium-space.render.com"],
   methods: ["GET", "POST", "DELETE"], // Add DELETE method here
   credentials: true
 };

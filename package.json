@@ -1,5 +1,5 @@
 {
-  "name": "pallium-backend",
+  "name": "pallium",
   "version": "1.0.0",
   "main": "server.mjs",
   "repository": "https://github.com/weelfis/pallium-backend.git",

@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 const connectDB = async () => {
-  console.log("DATABASE_URL:", process.env.DATABASE_URL);
+  console.log("pallium:", process.env.pallium);
 
   try {
     await prisma.$connect();
