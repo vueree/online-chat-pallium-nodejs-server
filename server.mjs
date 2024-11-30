@@ -6,18 +6,18 @@ import { Server } from "socket.io";
 import { prisma } from "./prismaClient.js";
 import authRoutes from "./routes/authRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
+import { connectDB } from "./db.js";
 
 dotenv.config();
 
 const app = express();
-
 // Middleware for JSON processing
 app.use(express.json());
 
 // CORS settings
 const corsOptions = {
   // origin: ["http://localhost:5173"],
-  origin: ["https://pillium-space.render.com"],
+  origin: ["*"],
   methods: ["GET", "POST", "DELETE"], // Add DELETE method here
   credentials: true
 };
@@ -28,6 +28,8 @@ app.use(cors(corsOptions));
 // Route connections
 app.use("/api/auth", authRoutes);
 app.use("/api/chat", chatRoutes);
+
+connectDB();
 
 const PORT = process.env.PORT || 3000;
 
