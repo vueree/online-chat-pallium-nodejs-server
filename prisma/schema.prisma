@@ -8,17 +8,17 @@ generator client {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  username  String    @unique
+  id        String   @id @default(cuid())
+  username  String   @unique
   password  String
-  createdAt DateTime  @default(now())
-  messages  Message[] @relation("UserToMessages")
+  createdAt DateTime @default(now())
+  messages  Message[]
 }
 
 model Message {
-  id        Int      @id @default(autoincrement())
-  senderId  Int
-  sender    User     @relation(fields: [senderId], references: [id], name: "UserToMessages")
-  content   String
+  id        String   @id @default(cuid())
+  message   String
+  sender    User     @relation(fields: [senderId], references: [id])
+  senderId  String
   timestamp DateTime @default(now())
 }

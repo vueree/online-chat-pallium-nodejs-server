@@ -12,6 +12,10 @@ export const createMessage = async (senderId, content) => {
 export const getMessagesByUserId = async (userId) => {
   return prisma.message.findMany({
     where: { senderId: userId },
-    include: { sender: true }
+    include: {
+      sender: {
+        select: { username: true }
+      }
+    }
   });
 };

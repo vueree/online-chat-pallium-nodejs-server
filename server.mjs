@@ -6,7 +6,6 @@ import { Server } from "socket.io";
 import { prisma } from "./prismaClient.js";
 import authRoutes from "./routes/authRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
-import { createMessage, getMessagesByUserId } from "./models/message.js"; // Импортируем функции
 
 dotenv.config();
 
@@ -34,32 +33,39 @@ const PORT = process.env.PORT || 3000;
 // Create HTTP server
 const httpServer = createServer(app);
 
-// Create Socket.IO instance with namespace
 const io = new Server(httpServer, { cors: corsOptions });
 
-// Handle WebSocket connections for the 'chat' namespace
 const chatNamespace = io.of("/chat");
+
 chatNamespace.on("connection", (socket) => {
-  console.log("User connected to chat namespace:", socket.id);
+  console.log("User connected to chat");
 
-  // Отправка истории сообщений при запросе
-  socket.on("get_messages", async (userId) => {
-    // Получаем userId, если необходимо
+  socket.on("send_message", async (data) => {
     try {
-      const messages = await getMessagesByUserId(userId); // Получаем сообщения для пользователя
-      socket.emit("message_history", messages);
-    } catch (error) {
-      console.error("Error fetching message history:", error);
-    }
-  });
+      console.log("Received message on server:", data);
+      const { message, username } = data;
 
-  // Обработка нового сообщения
-  socket.on("new_message", async ({ senderId, content }) => {
-    try {
-      const savedMessage = await createMessage(senderId, content); // Сохраняем сообщение в БД
-      chatNamespace.emit("new_message", savedMessage); // Отправляем всем пользователям
+      const user = await prisma.user.findUnique({ where: { username } });
+
+      if (!user) {
+        console.error("Пользователь не найден");
+        return;
+      }
+
+      const newMessage = await prisma.message.create({
+        data: {
+          senderId: user.id,
+          message
+        }
+      });
+
+      chatNamespace.emit("new_message", {
+        username: user.username,
+        message: newMessage.message,
+        timestamp: newMessage.timestamp
+      });
     } catch (error) {
-      console.error("Error saving message:", error);
+      console.error("Ошибка при отправке сообщения:", error);
     }
   });
 

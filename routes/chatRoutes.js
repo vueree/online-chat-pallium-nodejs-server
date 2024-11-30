@@ -20,11 +20,9 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Отправка сообщения
 router.post("/send", authenticateToken, async (req, res) => {
   const { content } = req.body;
 
-  // Проверка наличия контента сообщения
   if (!content || typeof content !== "string") {
     return res.status(400).json({ message: "Контент сообщения обязателен" });
   }
@@ -34,7 +32,6 @@ router.post("/send", authenticateToken, async (req, res) => {
       where: { id: req.user.userId }
     });
 
-    // Проверка, существует ли пользователь
     if (!user) {
       return res.status(404).json({ message: "Пользователь не найден" });
     }
@@ -46,7 +43,11 @@ router.post("/send", authenticateToken, async (req, res) => {
       }
     });
 
-    res.status(201).json({ message: "Сообщение отправлено", newMessage });
+    res.status(201).json({
+      username: user.username,
+      message: newMessage.content,
+      timestamp: newMessage.timestamp
+    });
   } catch (error) {
     console.error("Ошибка отправки сообщения:", error);
     res.status(500).json({ message: "Ошибка отправки сообщения" });
@@ -55,7 +56,6 @@ router.post("/send", authenticateToken, async (req, res) => {
 
 // Получение всех сообщений
 router.get("/messages", authenticateToken, async (req, res) => {
-  console.log("Получение сообщений...");
   try {
     const messages = await prisma.message.findMany({
       include: {
@@ -65,8 +65,15 @@ router.get("/messages", authenticateToken, async (req, res) => {
       },
       orderBy: { timestamp: "desc" }
     });
-    console.log("Сообщения успешно получены:", messages);
-    res.status(200).json(messages);
+
+    // Преобразование сообщений в формат IMessage
+    const formattedMessages = messages.map((msg) => ({
+      message: msg.content,
+      username: msg.sender.username,
+      timestamp: msg.timestamp.toISOString()
+    }));
+
+    res.status(200).json(formattedMessages);
   } catch (error) {
     console.error("Ошибка получения сообщений:", error);
     res.status(500).json({ message: "Ошибка получения сообщений" });
