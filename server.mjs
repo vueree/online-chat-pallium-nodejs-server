@@ -11,21 +11,17 @@ import { connectDB } from "./db.js";
 dotenv.config();
 
 const app = express();
-// Middleware for JSON processing
+
 app.use(express.json());
 
-// CORS settings
 const corsOptions = {
-  origin: ["http://localhost:5173"],
-  // origin: ["https://pallium-backend.onrender.com"],
-  methods: ["GET", "POST", "DELETE"], // Add DELETE method here
+  origin: ["http://localhost:5173", "https://pallium-backend.onrender.com"],
+  methods: ["GET", "POST", "DELETE"],
   credentials: true
 };
 
-// Apply CORS middleware
 app.use(cors(corsOptions));
 
-// Route connections
 app.use("/api/auth", authRoutes);
 app.use("/api/chat", chatRoutes);
 
