@@ -70,6 +70,10 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Неверные учетные данные" });
     }
 
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT_SECRET не установлен");
+    }
+
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
       expiresIn: "1h"
     });
