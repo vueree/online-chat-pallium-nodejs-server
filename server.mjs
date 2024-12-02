@@ -63,6 +63,12 @@ chatNamespace.on("connection", (socket) => {
         message: newMessage.message,
         timestamp: newMessage.timestamp
       });
+
+      console.log("Emitting new_message:", {
+        username: user.username,
+        message: newMessage.message,
+        timestamp: newMessage.timestamp
+      });
     } catch (error) {
       console.error("Ошибка при отправке сообщения:", error);
     }
