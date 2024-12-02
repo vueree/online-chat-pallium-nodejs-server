@@ -7,6 +7,7 @@ import { prisma } from "../prismaClient.js"; // Импортируйте prisma
 const router = express.Router();
 
 // Регистрация пользователя
+// Регистрация пользователя
 router.post("/register", async (req, res) => {
   console.log("Полученные данные:", req.body);
   const { username, password } = req.body;
@@ -33,7 +34,17 @@ router.post("/register", async (req, res) => {
       }
     });
 
-    res.status(201).json({ message: "Пользователь зарегистрирован", newUser });
+    // Создание токена
+    const token = jwt.sign({ userId: newUser.id }, process.env.JWT_SECRET, {
+      expiresIn: "1h" // Время жизни токена
+    });
+
+    // Отправка токена на клиент
+    res.status(201).json({
+      message: "Пользователь зарегистрирован",
+      token,
+      user: { id: newUser.id, username: newUser.username }
+    });
   } catch (error) {
     console.error("Ошибка регистрации:", error);
     res
