@@ -42,7 +42,7 @@ chatNamespace.on("connection", (socket) => {
   socket.on("send_message", async (data) => {
     try {
       console.log("Received message on server:", data);
-      const { content, username } = data;
+      const { message, username } = data;
 
       const user = await prisma.user.findUnique({ where: { username } });
 
@@ -54,13 +54,13 @@ chatNamespace.on("connection", (socket) => {
       const newMessage = await prisma.message.create({
         data: {
           senderId: user.id,
-          content: content
+          message: message
         }
       });
 
       chatNamespace.emit("new_message", {
         username: user.username,
-        message: newMessage.content,
+        message: newMessage.message,
         timestamp: newMessage.timestamp
       });
     } catch (error) {

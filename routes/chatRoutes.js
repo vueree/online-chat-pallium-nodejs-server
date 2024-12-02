@@ -21,9 +21,9 @@ const authenticateToken = (req, res, next) => {
 };
 
 router.post("/send", authenticateToken, async (req, res) => {
-  const { content } = req.body;
+  const { message } = req.body;
 
-  if (!content || typeof content !== "string") {
+  if (!message || typeof message !== "string") {
     return res.status(400).json({ message: "Контент сообщения обязателен" });
   }
 
@@ -39,13 +39,13 @@ router.post("/send", authenticateToken, async (req, res) => {
     const newMessage = await prisma.message.create({
       data: {
         senderId: user.id,
-        content: content
+        message: message
       }
     });
 
     res.status(201).json({
       username: user.username,
-      message: newMessage.content,
+      message: newMessage.message,
       timestamp: newMessage.timestamp
     });
   } catch (error) {
@@ -66,9 +66,9 @@ router.get("/messages", authenticateToken, async (req, res) => {
       orderBy: { timestamp: "desc" }
     });
 
-    // Преобразование сообщений в формат IMessage
+    // Преобразование сообщений в формат ыфвфвфы
     const formattedMessages = messages.map((msg) => ({
-      message: msg.content,
+      message: msg.message,
       username: msg.sender.username,
       timestamp: msg.timestamp.toISOString()
     }));
