@@ -84,6 +84,7 @@ const startServer = async () => {
     console.error("Error connecting to the database:", error);
   }
 };
+console.log("JWT_SECRET:", process.env.JWT_SECRET);
 
 // Start server
 startServer();
