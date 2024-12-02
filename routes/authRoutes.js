@@ -8,11 +8,19 @@ const router = express.Router();
 
 // Регистрация пользователя
 router.post("/register", async (req, res) => {
+  console.log("Полученные данные:", req.body);
   const { username, password } = req.body;
+
+  // Проверка входных данных
+  if (!username || !password) {
+    return res.status(400).json({ message: "username и password обязательны" });
+  }
+
   try {
     const existingUser = await prisma.user.findUnique({
       where: { username }
     });
+
     if (existingUser) {
       return res.status(400).json({ message: "Пользователь уже существует" });
     }
