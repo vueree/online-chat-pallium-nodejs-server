@@ -54,7 +54,7 @@ chatNamespace.on("connection", (socket) => {
       const newMessage = await prisma.message.create({
         data: {
           senderId: user.id,
-          content: message
+          content: content
         }
       });
 

@@ -39,7 +39,7 @@ router.post("/send", authenticateToken, async (req, res) => {
     const newMessage = await prisma.message.create({
       data: {
         senderId: user.id,
-        content
+        content: content
       }
     });
 
