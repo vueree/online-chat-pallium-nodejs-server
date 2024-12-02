@@ -29,7 +29,6 @@ connectDB();
 
 const PORT = process.env.PORT || 3000;
 
-// Create HTTP server
 const httpServer = createServer(app);
 
 const io = new Server(httpServer, { cors: corsOptions });
@@ -73,10 +72,9 @@ chatNamespace.on("connection", (socket) => {
   });
 });
 
-// Start server function
 const startServer = async () => {
   try {
-    await prisma.$connect(); // Подключение к базе данных
+    await prisma.$connect();
     httpServer.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
