@@ -22,8 +22,8 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-app.use("/api/auth", authRoutes);
-app.use("/api/chat", chatRoutes);
+app.use("/auth", authRoutes);
+app.use("/chat", chatRoutes);
 
 connectDB();
 
