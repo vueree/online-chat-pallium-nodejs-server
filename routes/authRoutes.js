@@ -2,17 +2,14 @@
 import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { prisma } from "../prismaClient.js"; // Импортируйте prisma
+import { prisma } from "../prismaClient.js";
 
 const router = express.Router();
 
-// Регистрация пользователя
-// Регистрация пользователя
 router.post("/register", async (req, res) => {
   console.log("Полученные данные:", req.body);
   const { username, password } = req.body;
 
-  // Проверка входных данных
   if (!username || !password) {
     return res.status(400).json({ message: "username и password обязательны" });
   }
@@ -34,12 +31,17 @@ router.post("/register", async (req, res) => {
       }
     });
 
-    // Создание токена
+    if (!process.env.JWT_SECRET) {
+      console.error("JWT_SECRET не установлен");
+      return res
+        .status(500)
+        .json({ message: "Ошибка сервера: JWT_SECRET не установлен" });
+    }
+
     const token = jwt.sign({ userId: newUser.id }, process.env.JWT_SECRET, {
-      expiresIn: "1h" // Время жизни токена
+      expiresIn: "1h"
     });
 
-    // Отправка токена на клиент
     res.status(201).json({
       message: "Пользователь зарегистрирован",
       token,
@@ -49,11 +51,10 @@ router.post("/register", async (req, res) => {
     console.error("Ошибка регистрации:", error);
     res
       .status(500)
-      .json({ message: "Ошибка регистрации", error: error.message });
+      .json({ message: "Ошибка регистрации", error: error.message || error });
   }
 });
 
-// Вход пользователя
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
@@ -71,7 +72,10 @@ router.post("/login", async (req, res) => {
     }
 
     if (!process.env.JWT_SECRET) {
-      throw new Error("JWT_SECRET не установлен");
+      console.error("JWT_SECRET не установлен");
+      return res
+        .status(500)
+        .json({ message: "Ошибка сервера: JWT_SECRET не установлен" });
     }
 
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {

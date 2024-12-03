@@ -75,14 +75,13 @@ chatNamespace.on("connection", (socket) => {
 const startServer = async () => {
   try {
     await prisma.$connect();
+    console.log("База данных подключена успешно");
     httpServer.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
   } catch (error) {
-    console.error("Error connecting to the database:", error);
+    console.error("Ошибка подключения к базе данных:", error);
   }
 };
-console.log("JWT_SECRET:", process.env.JWT_SECRET);
 
-// Start server
 startServer();
