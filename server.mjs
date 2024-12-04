@@ -14,37 +14,36 @@ dotenv.config();
 
 const app = express();
 
+// Middleware
 app.use(express.json());
-
 const corsOptions = {
   origin: ["http://localhost:5173", "https://pallium.onrender.com"],
   methods: ["GET", "POST", "DELETE"],
   credentials: true
 };
-
 app.use(cors(corsOptions));
 
+// Routes
 app.use("/auth", authRoutes);
 app.use("/chat", chatRoutes);
 
+// Connect to DB
 connectDB();
 
+// Serve static files
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 app.use(express.static(path.join(__dirname, "dist")));
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 
+// Create HTTP Server and Socket.io
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
-
 const httpServer = createServer(app);
 const io = new Server(httpServer, { cors: corsOptions });
 
+// Chat Namespace
 const chatNamespace = io.of("/chat");
 
 chatNamespace.on("connection", (socket) => {
@@ -84,16 +83,27 @@ chatNamespace.on("connection", (socket) => {
   });
 });
 
+// Start the server
 const startServer = async () => {
   try {
     await prisma.$connect();
     console.log("База данных подключена успешно");
-    httpServer.listen(process.env.PORT || 3000, () => {
-      console.log(`Server running on port ${process.env.PORT || 3000}`);
+
+    // Start HTTP server
+    httpServer.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
     });
   } catch (error) {
     console.error("Ошибка подключения к базе данных:", error);
+    process.exit(1); // Exit with error code
   }
 };
 
+// Graceful shutdown
+process.on("SIGINT", () => {
+  console.log("Shutting down server...");
+  prisma.$disconnect().then(() => process.exit(0));
+});
+
+// Initialize the server
 startServer();
