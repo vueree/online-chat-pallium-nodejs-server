@@ -29,6 +29,18 @@ app.use("/chat", chatRoutes);
 
 connectDB();
 
+// Получаем путь к текущему модулю
+const __filename = new URL(import.meta.url).pathname;
+const __dirname = path.dirname(__filename);
+
+// Указываем путь к папке public
+app.use(express.static(path.join(__dirname, "public")));
+
+// Обрабатываем запросы и возвращаем index.html
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
+
 // // Получаем текущий путь
 // const __filename = new URL(import.meta.url).pathname;
 // const __dirname = path.dirname(__filename);
