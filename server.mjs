@@ -7,6 +7,7 @@ import { prisma } from "./prismaClient.js";
 import authRoutes from "./routes/authRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import { connectDB } from "./db.js";
+import path from "path";
 
 dotenv.config();
 
