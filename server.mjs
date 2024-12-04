@@ -27,6 +27,25 @@ app.use("/chat", chatRoutes);
 
 connectDB();
 
+// Чтение конфигурации static.json, если файл существует
+const staticConfigPath = path.join(__dirname, "static.json");
+let staticConfig = {};
+if (fs.existsSync(staticConfigPath)) {
+  staticConfig = JSON.parse(fs.readFileSync(staticConfigPath, "utf-8"));
+}
+
+if (staticConfig.routes) {
+  app.use((req, res, next) => {
+    if (staticConfig.routes["/**"] && !req.url.startsWith("/static")) {
+      res.sendFile(path.resolve(__dirname, "index.html"));
+    } else {
+      next();
+    }
+  });
+}
+
+app.use(express.static(path.join(__dirname, "dist")));
+
 const PORT = process.env.PORT || 3000;
 
 const httpServer = createServer(app);
