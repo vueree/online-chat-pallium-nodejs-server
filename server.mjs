@@ -29,49 +29,15 @@ app.use("/chat", chatRoutes);
 
 connectDB();
 
-// Получаем путь к текущему модулю
-const __filename = new URL(import.meta.url).pathname;
-const __dirname = path.dirname(__filename);
-
-// Указываем путь к папке public
 app.use(express.static(path.join(__dirname, "public")));
 
-// Обрабатываем запросы и возвращаем index.html
+app.use(express.static(path.join(__dirname, "dist")));
+
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// // Получаем текущий путь
-// const __filename = new URL(import.meta.url).pathname;
-// const __dirname = path.dirname(__filename);
-
-// // Чтение конфигурации static.json, если файл существует
-// const staticConfigPath = path.join(__dirname, "static.json");
-// let staticConfig = {};
-// if (fs.existsSync(staticConfigPath)) {
-//   staticConfig = JSON.parse(fs.readFileSync(staticConfigPath, "utf-8"));
-// }
-
-// if (staticConfig.routes) {
-//   app.use((req, res, next) => {
-//     if (staticConfig.routes["/**"] && !req.url.startsWith("/static")) {
-//       res.sendFile(path.resolve(__dirname, "index.html"));
-//     } else {
-//       next();
-//     }
-//   });
-// }
-
-// app.get("*", (req, res) => {
-//   res.sendFile(path.join(__dirname, "index.html"));
-// });
-
-app.use(express.static(path.join(__dirname, "publick")));
-
-const PORT = process.env.PORT || 3000;
-
 const httpServer = createServer(app);
-
 const io = new Server(httpServer, { cors: corsOptions });
 
 const chatNamespace = io.of("/chat");
@@ -117,8 +83,8 @@ const startServer = async () => {
   try {
     await prisma.$connect();
     console.log("База данных подключена успешно");
-    httpServer.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+    httpServer.listen(process.env.PORT || 3000, () => {
+      console.log(`Server running on port ${process.env.PORT || 3000}`);
     });
   } catch (error) {
     console.error("Ошибка подключения к базе данных:", error);
