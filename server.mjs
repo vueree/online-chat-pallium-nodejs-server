@@ -15,7 +15,7 @@ const app = express();
 app.use(express.json());
 
 const corsOptions = {
-  origin: ["http://localhost:5173", "https://pallium-backend.onrender.com"],
+  origin: ["http://localhost:5173", "https://pallium.onrender.com"],
   methods: ["GET", "POST", "DELETE"],
   credentials: true
 };
