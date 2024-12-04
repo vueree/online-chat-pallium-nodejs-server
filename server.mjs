@@ -4,11 +4,7 @@ import cors from "cors";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { prisma } from "./prismaClient.js";
-import authRoutes from "./routes/authRoutes.js";
-import chatRoutes from "./routes/chatRoutes.js";
 import { connectDB } from "./db.js";
-import path from "path";
-import { fileURLToPath } from "url";
 
 dotenv.config();
 
@@ -23,20 +19,8 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// Routes
-app.use("/auth", authRoutes);
-app.use("/chat", chatRoutes);
-
 // Connect to DB
 connectDB();
-
-// Serve static files
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-app.use(express.static(path.join(__dirname, "dist")));
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "dist", "index.html"));
-});
 
 // Create HTTP Server and Socket.io
 const PORT = process.env.PORT || 3000;
