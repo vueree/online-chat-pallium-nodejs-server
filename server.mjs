@@ -8,6 +8,7 @@ import authRoutes from "./routes/authRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import { connectDB } from "./db.js";
 import path from "path";
+import fs from "fs";
 
 dotenv.config();
 
