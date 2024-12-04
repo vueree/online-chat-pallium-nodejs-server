@@ -29,7 +29,7 @@ app.use("/chat", chatRoutes);
 
 connectDB();
 
-// Используем import.meta.url для получения пути к текущему файлу
+// Получаем текущий путь
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
 
@@ -40,10 +40,8 @@ if (fs.existsSync(staticConfigPath)) {
   staticConfig = JSON.parse(fs.readFileSync(staticConfigPath, "utf-8"));
 }
 
-// Если указаны маршруты в static.json, добавляем логику для перенаправления на index.html
 if (staticConfig.routes) {
   app.use((req, res, next) => {
-    // Перенаправляем все запросы, кроме статических файлов, на index.html
     if (staticConfig.routes["/**"] && !req.url.startsWith("/static")) {
       res.sendFile(path.resolve(__dirname, "index.html"));
     } else {
@@ -52,7 +50,6 @@ if (staticConfig.routes) {
   });
 }
 
-// Статическая отдача файлов (например, для фронтенд ресурсов)
 app.use(express.static(path.join(__dirname, "dist")));
 
 const PORT = process.env.PORT || 3000;
