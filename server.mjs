@@ -8,7 +8,7 @@ import authRoutes from "./routes/authRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import { connectDB } from "./db.js";
 import path from "path";
-import fs from "fs";
+// import fs from "fs";
 
 dotenv.config();
 
@@ -29,30 +29,30 @@ app.use("/chat", chatRoutes);
 
 connectDB();
 
-// Получаем текущий путь
-const __filename = new URL(import.meta.url).pathname;
-const __dirname = path.dirname(__filename);
+// // Получаем текущий путь
+// const __filename = new URL(import.meta.url).pathname;
+// const __dirname = path.dirname(__filename);
 
-// Чтение конфигурации static.json, если файл существует
-const staticConfigPath = path.join(__dirname, "static.json");
-let staticConfig = {};
-if (fs.existsSync(staticConfigPath)) {
-  staticConfig = JSON.parse(fs.readFileSync(staticConfigPath, "utf-8"));
-}
+// // Чтение конфигурации static.json, если файл существует
+// const staticConfigPath = path.join(__dirname, "static.json");
+// let staticConfig = {};
+// if (fs.existsSync(staticConfigPath)) {
+//   staticConfig = JSON.parse(fs.readFileSync(staticConfigPath, "utf-8"));
+// }
 
-if (staticConfig.routes) {
-  app.use((req, res, next) => {
-    if (staticConfig.routes["/**"] && !req.url.startsWith("/static")) {
-      res.sendFile(path.resolve(__dirname, "index.html"));
-    } else {
-      next();
-    }
-  });
-}
+// if (staticConfig.routes) {
+//   app.use((req, res, next) => {
+//     if (staticConfig.routes["/**"] && !req.url.startsWith("/static")) {
+//       res.sendFile(path.resolve(__dirname, "index.html"));
+//     } else {
+//       next();
+//     }
+//   });
+// }
 
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
-});
+// app.get("*", (req, res) => {
+//   res.sendFile(path.join(__dirname, "index.html"));
+// });
 
 app.use(express.static(path.join(__dirname, "publick")));
 
