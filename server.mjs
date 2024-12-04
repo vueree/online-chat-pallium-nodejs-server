@@ -8,7 +8,7 @@ import authRoutes from "./routes/authRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import { connectDB } from "./db.js";
 import path from "path";
-// import fs from "fs";
+import { fileURLToPath } from "url";
 
 dotenv.config();
 
@@ -29,13 +29,14 @@ app.use("/chat", chatRoutes);
 
 connectDB();
 
-app.use(express.static(path.join(__dirname, "public")));
-
 app.use(express.static(path.join(__dirname, "dist")));
 
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, { cors: corsOptions });
