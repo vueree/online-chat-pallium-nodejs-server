@@ -28,10 +28,10 @@ app.use("/chat", chatRoutes);
 // Connect to DB
 connectDB();
 
-// Отдаем статические файлы
-app.use(express.static(path.join(__dirname, "dist")));
+// Отдача статических файлов Vue приложения (например, после сборки)
+app.use(express.static(path.join(__dirname, "dist"))); // 'dist' — это папка с собранными файлами Vue
 
-// Перенаправляем все запросы на index.html для обработки Vue Router
+// Все запросы, которые не являются API-запросами, направляем на index.html
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
