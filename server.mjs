@@ -31,6 +31,16 @@ app.use("/chat", chatRoutes);
 // Отдача статических файлов Vue приложения
 app.use(express.static(path.join(__dirname, "dist")));
 
+// Для маршрута регистрации
+app.get("/register", (req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
+});
+
+// Все другие запросы, не являющиеся API, перенаправляем на index.html
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
+});
+
 // Все запросы, которые не являются API-запросами, перенаправляем на index.html
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "dist", "index.html"));
