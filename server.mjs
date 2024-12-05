@@ -1,5 +1,6 @@
-import dotenv from "dotenv";
 import express from "express";
+import path from "path";
+import dotenv from "dotenv";
 import cors from "cors";
 import { createServer } from "http";
 import { Server } from "socket.io";
@@ -25,16 +26,16 @@ app.use(cors(corsOptions));
 app.use("/auth", authRoutes);
 app.use("/chat", chatRoutes);
 
-// Connect to DB
-connectDB();
+// Отдача статических файлов Vue приложения
+app.use(express.static(path.join(__dirname, "dist")));
 
-// Отдача статических файлов Vue приложения (например, после сборки)
-app.use(express.static(path.join(__dirname, "dist"))); // 'dist' — это папка с собранными файлами Vue
-
-// Все запросы, которые не являются API-запросами, направляем на index.html
+// Все запросы, которые не являются API-запросами, перенаправляем на index.html
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
+
+// Connect to DB
+connectDB();
 
 // Create HTTP Server and Socket.io
 const PORT = process.env.PORT || 3000;
