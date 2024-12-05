@@ -28,6 +28,14 @@ app.use("/chat", chatRoutes);
 // Connect to DB
 connectDB();
 
+// Отдаем статические файлы
+app.use(express.static(path.join(__dirname, "dist")));
+
+// Перенаправляем все запросы на index.html для обработки Vue Router
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
+});
+
 // Create HTTP Server and Socket.io
 const PORT = process.env.PORT || 3000;
 const httpServer = createServer(app);
