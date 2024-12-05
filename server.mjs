@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 import cors from "cors";
 import { createServer } from "http";
@@ -12,6 +13,7 @@ import chatRoutes from "./routes/chatRoutes.js";
 dotenv.config();
 
 const app = express();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Middleware
 app.use(express.json());
