@@ -6,6 +6,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
+    "build": "vite build",
     "start": "npx prisma generate && node server.mjs",
     "dev": "nodemon server.mjs"
   },
