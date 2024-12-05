@@ -5,6 +5,8 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { prisma } from "./prismaClient.js";
 import { connectDB } from "./db.js";
+import authRoutes from "./routes/authRoutes.js";
+import chatRoutes from "./routes/chatRoutes.js";
 
 dotenv.config();
 
@@ -18,6 +20,10 @@ const corsOptions = {
   credentials: true
 };
 app.use(cors(corsOptions));
+
+// Routes
+app.use("/auth", authRoutes);
+app.use("/chat", chatRoutes);
 
 // Connect to DB
 connectDB();
