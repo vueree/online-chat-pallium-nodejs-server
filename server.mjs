@@ -15,7 +15,6 @@ dotenv.config();
 const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Middleware
 app.use(express.json());
 const corsOptions = {
   origin: ["http://localhost:5173", "https://pallium.onrender.com"],
@@ -24,19 +23,15 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// API Routes
 app.use("/auth", authRoutes);
 app.use("/chat", chatRoutes);
 
-// Connect to DB
 connectDB();
 
-// Create HTTP Server and Socket.io
 const PORT = process.env.PORT || 3000;
 const httpServer = createServer(app);
 const io = new Server(httpServer, { cors: corsOptions });
 
-// Chat Namespace
 const chatNamespace = io.of("/chat");
 
 chatNamespace.on("connection", (socket) => {
