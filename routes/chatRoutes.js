@@ -63,7 +63,7 @@ router.get("/messages", authenticateToken, async (req, res) => {
           select: { username: true }
         }
       },
-      orderBy: { timestamp: "desc" }
+      orderBy: { timestamp: "asc" }
     });
 
     // Преобразование сообщений в формат ыфвфвфы
