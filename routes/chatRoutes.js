@@ -54,26 +54,56 @@ router.post("/send", authenticateToken, async (req, res) => {
   }
 });
 
-// Получение всех сообщений
+// Получение всех сообщений с пагинацией
 router.get("/messages", authenticateToken, async (req, res) => {
+  const { page = 1, limit = 10 } = req.query; // Параметры пагинации
+
+  // Проверяем и приводим параметры к числу
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+
+  if (
+    isNaN(pageNumber) ||
+    isNaN(limitNumber) ||
+    pageNumber <= 0 ||
+    limitNumber <= 0
+  ) {
+    return res
+      .status(400)
+      .json({ message: "Некорректные параметры пагинации" });
+  }
+
+  const skip = (pageNumber - 1) * limitNumber; // Вычисляем, сколько записей пропустить
+
   try {
+    // Получаем сообщения с учетом пагинации
     const messages = await prisma.message.findMany({
+      skip,
+      take: limitNumber,
       include: {
-        sender: {
-          select: { username: true }
-        }
+        sender: { select: { username: true } } // Берем только поле username из связанных данных
       },
-      orderBy: { timestamp: "asc" }
+      orderBy: { timestamp: "asc" } // Сортировка по времени
     });
 
-    // Преобразование сообщений в формат ыфвфвфы
+    // Получаем общее количество сообщений для подсчета страниц
+    const totalMessages = await prisma.message.count();
+    const totalPages = Math.ceil(totalMessages / limitNumber);
+
+    // Форматируем данные для ответа
     const formattedMessages = messages.map((msg) => ({
       message: msg.message,
-      username: msg.sender.username,
+      username: msg.sender?.username || "Unknown",
       timestamp: msg.timestamp.toISOString()
     }));
 
-    res.status(200).json(formattedMessages);
+    // Возвращаем данные в формате JSON
+    res.status(200).json({
+      currentPage: pageNumber,
+      totalPages,
+      totalMessages,
+      messages: formattedMessages
+    });
   } catch (error) {
     console.error("Ошибка получения сообщений:", error);
     res.status(500).json({ message: "Ошибка получения сообщений" });
