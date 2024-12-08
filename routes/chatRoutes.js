@@ -78,15 +78,14 @@ router.get("/messages", authenticateToken, async (req, res) => {
     const totalPages = Math.ceil(totalMessages / limitNumber);
 
     // Вычисляем, с какого сообщения начать выборку для текущей страницы
-    const skip = Math.max(0, totalMessages - pageNumber * limitNumber);
-    const take =
-      pageNumber > 1 ? limitNumber : Math.min(limitNumber, totalMessages);
+    const skip = (pageNumber - 1) * limitNumber;
+    const take = limitNumber;
 
-    // Получаем сообщения в обратном порядке
+    // Получаем сообщения в правильном порядке
     const messages = await prisma.message.findMany({
       skip,
       take,
-      orderBy: { timestamp: "asc" }, // Изменено на desc для обратного порядка
+      orderBy: { timestamp: "desc" }, // Сообщения идут от новых к старым
       include: { sender: { select: { username: true } } }
     });
 
