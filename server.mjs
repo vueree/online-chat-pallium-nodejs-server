@@ -40,7 +40,7 @@ chatNamespace.on("connection", (socket) => {
   // Обработка запроса истории сообщений
   socket.on("message_history", async (data, callback) => {
     try {
-      const { page, perPage } = data; // Используйте perPage вместо messagesPerPage для согласованности
+      const { page, perPage } = data;
 
       if (!page || !perPage || page <= 0 || perPage <= 0) {
         throw new Error("Invalid pagination parameters");
@@ -56,7 +56,7 @@ chatNamespace.on("connection", (socket) => {
       const messages = await prisma.message.findMany({
         skip,
         take: perPage,
-        orderBy: { timestamp: "asc" },
+        orderBy: { timestamp: "asc" }, // Возвращаем сообщения в обратном порядке
         include: { sender: { select: { username: true } } }
       });
 
