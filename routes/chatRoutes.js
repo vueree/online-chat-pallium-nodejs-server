@@ -58,7 +58,6 @@ router.post("/send", authenticateToken, async (req, res) => {
 router.get("/messages", authenticateToken, async (req, res) => {
   const { page = 1, limit = 10 } = req.query; // Параметры пагинации
 
-  // Проверяем и приводим параметры к числу
   const pageNumber = parseInt(page, 10);
   const limitNumber = parseInt(limit, 10);
 
@@ -73,33 +72,35 @@ router.get("/messages", authenticateToken, async (req, res) => {
       .json({ message: "Некорректные параметры пагинации" });
   }
 
-  const skip = (pageNumber - 1) * limitNumber; // Вычисляем, сколько записей пропустить
-
   try {
-    // Получаем сообщения с учетом пагинации
-    const messages = await prisma.message.findMany({
-      skip: 0, // Начало списка
-      take: 10, // Первые 10 сообщений
-      orderBy: { timestamp: "asc" },
-      include: { sender: { select: { username: true } } }
-    });
-
-    // Получаем общее количество сообщений для подсчета страниц
+    // Подсчет общего количества сообщений
     const totalMessages = await prisma.message.count();
     const totalPages = Math.ceil(totalMessages / limitNumber);
 
-    // Форматируем данные для ответа
-    const formattedMessages = messages.map((msg) => ({
+    // Вычисляем, с какого сообщения начать выборку для текущей страницы
+    const skip = Math.max(0, totalMessages - pageNumber * limitNumber);
+    const take =
+      pageNumber > 1 ? limitNumber : Math.min(limitNumber, totalMessages);
+
+    // Получаем сообщения в обратном порядке
+    const messages = await prisma.message.findMany({
+      skip,
+      take,
+      orderBy: { timestamp: "desc" }, // Изменено на desc для обратного порядка
+      include: { sender: { select: { username: true } } }
+    });
+
+    // Переворачиваем массив сообщений, чтобы они шли от старых к новым
+    const formattedMessages = messages.reverse().map((msg) => ({
       message: msg.message,
       username: msg.sender?.username || "Unknown",
       timestamp: msg.timestamp.toISOString()
     }));
 
-    // Возвращаем данные в формате JSON
     res.status(200).json({
       currentPage: pageNumber,
-      totalPages,
-      totalMessages,
+      totalPages: totalPages,
+      totalMessages: totalMessages,
       messages: formattedMessages
     });
   } catch (error) {
