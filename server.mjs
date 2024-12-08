@@ -37,6 +37,41 @@ const chatNamespace = io.of("/chat");
 chatNamespace.on("connection", (socket) => {
   console.log("User connected to chat");
 
+  // Обработка запроса истории сообщений
+  socket.on("get_message_history", async ({ page, messagesPerPage }) => {
+    try {
+      const skip = (page - 1) * messagesPerPage; // Пропускаем сообщения для предыдущих страниц
+      const take = messagesPerPage; // Берем заданное количество сообщений
+
+      const messages = await prisma.message.findMany({
+        skip,
+        take,
+        orderBy: { timestamp: "asc" }, // Сортировка по времени
+        include: {
+          sender: {
+            select: { username: true } // Получаем имя отправителя
+          }
+        }
+      });
+
+      const totalMessages = await prisma.message.count(); // Общее количество сообщений
+      const totalPages = Math.ceil(totalMessages / messagesPerPage);
+
+      socket.emit("message_history", {
+        messages: messages.map((msg) => ({
+          username: msg.sender.username,
+          message: msg.message,
+          timestamp: msg.timestamp
+        })),
+        page,
+        totalPages
+      });
+    } catch (error) {
+      console.error("Ошибка получения истории сообщений:", error);
+      socket.emit("error", "Ошибка получения истории сообщений");
+    }
+  });
+
   socket.on("send_message", async (data) => {
     try {
       console.log("Received message on server:", data);
