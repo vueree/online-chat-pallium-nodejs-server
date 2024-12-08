@@ -78,29 +78,23 @@ router.get("/messages", authenticateToken, async (req, res) => {
     const totalPages = Math.ceil(totalMessages / limitNumber);
 
     // Вычисляем, с какого сообщения начать выборку для текущей страницы
-    const skip = (pageNumber - 1) * limitNumber;
+    const skip = (pageNumber - 1) * limitNumber; // Страница 1 начнется с самого старого сообщения
     const take = limitNumber;
 
-    // Получаем сообщения в правильном порядке
+    // Получаем сообщения в обратном порядке (сортируем по timestamp в порядке от самых старых к новым)
     const messages = await prisma.message.findMany({
       skip,
       take,
-      orderBy: { timestamp: "asc" }, // Сообщения идут от новых к старым
+      orderBy: { timestamp: "asc" }, // Порядок от старых к новым
       include: { sender: { select: { username: true } } }
     });
 
-    // Переворачиваем массив сообщений, чтобы они шли от старых к новым
-    const formattedMessages = messages.reverse().map((msg) => ({
-      message: msg.message,
-      username: msg.sender?.username || "Unknown",
-      timestamp: msg.timestamp.toISOString()
-    }));
-
+    // Отправляем данные о сообщениях и пагинации
     res.status(200).json({
       currentPage: pageNumber,
       totalPages: totalPages,
       totalMessages: totalMessages,
-      messages: formattedMessages
+      messages: messages
     });
   } catch (error) {
     console.error("Ошибка получения сообщений:", error);
