@@ -85,7 +85,7 @@ router.get("/messages", authenticateToken, async (req, res) => {
     const messages = await prisma.message.findMany({
       skip,
       take,
-      orderBy: { timestamp: "desc" }, // Сообщения идут от новых к старым
+      orderBy: { timestamp: "asc" }, // Сообщения идут от новых к старым
       include: { sender: { select: { username: true } } }
     });
 
