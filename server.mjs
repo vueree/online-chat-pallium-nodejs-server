@@ -38,37 +38,32 @@ chatNamespace.on("connection", (socket) => {
   console.log("User connected to chat");
 
   // Обработка запроса истории сообщений
-  socket.on("get_message_history", async ({ page, messagesPerPage }) => {
+  socket.on("get_message_history", async (data, callback) => {
     try {
-      const skip = (page - 1) * messagesPerPage; // Пропускаем сообщения для предыдущих страниц
-      const take = messagesPerPage; // Берем заданное количество сообщений
+      // Извлечение параметров
+      const { page, messagesPerPage } = data;
 
+      // Проверка входных данных
+      if (!page || !messagesPerPage || page <= 0 || messagesPerPage <= 0) {
+        throw new Error("Invalid pagination parameters");
+      }
+
+      // Вычисление значения `skip`
+      const skip = (page - 1) * messagesPerPage;
+
+      // Запрос к базе данных
       const messages = await prisma.message.findMany({
-        skip,
-        take,
+        skip, // Пропуск сообщений для пагинации
+        take: messagesPerPage, // Количество сообщений на странице
         orderBy: { timestamp: "asc" }, // Сортировка по времени
-        include: {
-          sender: {
-            select: { username: true } // Получаем имя отправителя
-          }
-        }
+        include: { sender: { select: { username: true } } } // Включение отправителя
       });
 
-      const totalMessages = await prisma.message.count(); // Общее количество сообщений
-      const totalPages = Math.ceil(totalMessages / messagesPerPage);
-
-      socket.emit("message_history", {
-        messages: messages.map((msg) => ({
-          username: msg.sender.username,
-          message: msg.message,
-          timestamp: msg.timestamp
-        })),
-        page,
-        totalPages
-      });
+      // Возврат данных клиенту
+      callback({ success: true, messages });
     } catch (error) {
       console.error("Ошибка получения истории сообщений:", error);
-      socket.emit("error", "Ошибка получения истории сообщений");
+      callback({ success: false, error: error.message });
     }
   });
 

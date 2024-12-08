@@ -78,12 +78,10 @@ router.get("/messages", authenticateToken, async (req, res) => {
   try {
     // Получаем сообщения с учетом пагинации
     const messages = await prisma.message.findMany({
-      skip,
-      take: limitNumber,
-      include: {
-        sender: { select: { username: true } } // Берем только поле username из связанных данных
-      },
-      orderBy: { timestamp: "asc" } // Сортировка по времени
+      skip: 0, // Начало списка
+      take: 10, // Первые 10 сообщений
+      orderBy: { timestamp: "asc" },
+      include: { sender: { select: { username: true } } }
     });
 
     // Получаем общее количество сообщений для подсчета страниц
