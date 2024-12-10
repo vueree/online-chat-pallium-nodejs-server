@@ -4,7 +4,6 @@ import { prisma } from "../prismaClient.js";
 
 const router = express.Router();
 
-// Middleware для проверки токена пользователя
 const authenticateToken = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) {
@@ -60,6 +59,11 @@ router.get("/messages", authenticateToken, async (req, res) => {
   const pageNumber = parseInt(page, 10);
   const limitNumber = parseInt(limit, 10);
 
+  console.log(`[DEBUG] Pagination Request:`, {
+    pageNumber,
+    limitNumber
+  });
+
   if (
     isNaN(pageNumber) ||
     isNaN(limitNumber) ||
@@ -67,26 +71,38 @@ router.get("/messages", authenticateToken, async (req, res) => {
     limitNumber <= 0 ||
     limitNumber > 100
   ) {
+    console.error(`[ERROR] Invalid pagination parameters`, {
+      pageNumber,
+      limitNumber
+    });
     return res.status(400).json({
       message: "Некорректные параметры пагинации",
-      details: {
-        page: pageNumber,
-        limit: limitNumber
-      }
+      details: { page: pageNumber, limit: limitNumber }
     });
   }
 
   try {
+    console.time("[PERFORMANCE] Message Fetch");
+
     const totalMessages = await prisma.message.count();
+    console.log(`[DEBUG] Total Messages:`, totalMessages);
+
     const totalPages = Math.ceil(totalMessages / limitNumber);
+    console.log(`[DEBUG] Total Pages:`, totalPages);
 
     const skip = (pageNumber - 1) * limitNumber;
     const take = limitNumber;
 
+    console.log(`[DEBUG] Pagination Details:`, {
+      skip,
+      take,
+      currentPage: pageNumber
+    });
+
     const messages = await prisma.message.findMany({
       skip,
       take,
-      orderBy: { timestamp: "desk" },
+      orderBy: { timestamp: "desc" },
       include: {
         sender: {
           select: {
@@ -96,6 +112,10 @@ router.get("/messages", authenticateToken, async (req, res) => {
         }
       }
     });
+
+    console.log(`[DEBUG] Fetched Messages Count:`, messages.length);
+
+    console.timeEnd("[PERFORMANCE] Message Fetch");
 
     res.status(200).json({
       currentPage: pageNumber,
@@ -107,7 +127,7 @@ router.get("/messages", authenticateToken, async (req, res) => {
       }))
     });
   } catch (error) {
-    console.error("Ошибка получения сообщений:", error);
+    console.error("[ERROR] Message Fetch Error:", error);
     res.status(500).json({
       message: "Ошибка получения сообщений",
       error: error instanceof Error ? error.message : "Unknown error"
@@ -115,11 +135,10 @@ router.get("/messages", authenticateToken, async (req, res) => {
   }
 });
 
-// Очистка сообщений
 router.delete("/clear", authenticateToken, async (req, res) => {
   try {
-    await prisma.message.deleteMany(); // Удаляем все сообщения
-    res.status(204).send(); // Успешно, без содержимого
+    await prisma.message.deleteMany();
+    res.status(204).send();
   } catch (error) {
     console.error("Ошибка очистки сообщений:", error);
     res.status(500).json({ message: "Ошибка очистки сообщений" });

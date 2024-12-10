@@ -9,7 +9,7 @@ export const createUser = async (username, password) => {
     });
   } catch (error) {
     console.error("Error creating user:", error);
-    throw error; // Пробрасываем ошибку выше
+    throw error;
   }
 };
 
@@ -24,6 +24,6 @@ export const getUserByUsername = async (username) => {
     });
   } catch (error) {
     console.error("Error fetching user by username:", error);
-    throw error; // Пробрасываем ошибку выше
+    throw error;
   }
 };

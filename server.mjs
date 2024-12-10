@@ -38,10 +38,15 @@ chatNamespace.on("connection", (socket) => {
   console.log("User connected to chat");
 
   socket.on("message_history", async (data, callback) => {
+    console.log("[DEBUG] Message History Request:", data);
+
     try {
       const { page = 1, perPage = 10 } = data;
 
+      console.log(`[DEBUG] Pagination Parameters:`, { page, perPage });
+
       if (page <= 0 || perPage <= 0 || perPage > 100) {
+        console.error(`[ERROR] Invalid Pagination:`, { page, perPage });
         return callback({
           success: false,
           error: "Invalid pagination parameters",
@@ -49,8 +54,13 @@ chatNamespace.on("connection", (socket) => {
         });
       }
 
+      console.time("[PERFORMANCE] WS Message History");
+
       const totalMessages = await prisma.message.count();
+      console.log(`[DEBUG] Total Messages:`, totalMessages);
+
       const totalPages = Math.ceil(totalMessages / perPage);
+      console.log(`[DEBUG] Total Pages:`, totalPages);
 
       const messages = await prisma.message.findMany({
         skip: (page - 1) * perPage,
@@ -66,6 +76,9 @@ chatNamespace.on("connection", (socket) => {
         }
       });
 
+      console.log(`[DEBUG] Fetched Messages Count:`, messages.length);
+      console.timeEnd("[PERFORMANCE] WS Message History");
+
       callback({
         success: true,
         messages: messages.map((msg) => ({
@@ -76,7 +89,7 @@ chatNamespace.on("connection", (socket) => {
         totalPages
       });
     } catch (error) {
-      console.error("Ошибка получения истории сообщений:", error);
+      console.error("[ERROR] WS Message History Error:", error);
       callback({
         success: false,
         error: error instanceof Error ? error.message : "Unknown error"
@@ -118,27 +131,23 @@ chatNamespace.on("connection", (socket) => {
   });
 });
 
-// Start the server
 const startServer = async () => {
   try {
     await prisma.$connect();
     console.log("База данных подключена успешно");
 
-    // Start HTTP server
     httpServer.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });
   } catch (error) {
     console.error("Ошибка подключения к базе данных:", error);
-    process.exit(1); // Exit with error code
+    process.exit(1);
   }
 };
 
-// Graceful shutdown
 process.on("SIGINT", () => {
   console.log("Shutting down server...");
   prisma.$disconnect().then(() => process.exit(0));
 });
 
-// Initialize the server
 startServer();
