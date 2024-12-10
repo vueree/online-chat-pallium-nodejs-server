@@ -65,7 +65,7 @@ chatNamespace.on("connection", (socket) => {
       const messages = await prisma.message.findMany({
         skip: (page - 1) * perPage,
         take: perPage,
-        orderBy: { timestamp: "desc" },
+        orderBy: { timestamp: "asc" },
         include: {
           sender: {
             select: {
