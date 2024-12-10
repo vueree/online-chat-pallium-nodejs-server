@@ -37,38 +37,50 @@ const chatNamespace = io.of("/chat");
 chatNamespace.on("connection", (socket) => {
   console.log("User connected to chat");
 
-  // Обработка запроса истории сообщений
   socket.on("message_history", async (data, callback) => {
     try {
-      const { page, perPage } = data;
+      const { page = 1, perPage = 10 } = data;
 
-      if (!page || !perPage || page <= 0 || perPage <= 0) {
-        throw new Error("Invalid pagination parameters");
+      if (page <= 0 || perPage <= 0 || perPage > 100) {
+        return callback({
+          success: false,
+          error: "Invalid pagination parameters",
+          details: { page, perPage }
+        });
       }
 
-      const skip = (page - 1) * perPage;
-
-      // Подсчет общего количества сообщений
       const totalMessages = await prisma.message.count();
       const totalPages = Math.ceil(totalMessages / perPage);
 
-      // Запрос сообщений с пагинацией
       const messages = await prisma.message.findMany({
-        skip,
+        skip: (page - 1) * perPage,
         take: perPage,
-        orderBy: { timestamp: "asc" }, // Возвращаем сообщения в обратном порядке
-        include: { sender: { select: { username: true } } }
+        orderBy: { timestamp: "desc" },
+        include: {
+          sender: {
+            select: {
+              username: true,
+              id: true
+            }
+          }
+        }
       });
 
       callback({
         success: true,
-        messages,
+        messages: messages.map((msg) => ({
+          ...msg,
+          username: msg.sender?.username || "Anonymous"
+        })),
         page,
         totalPages
       });
     } catch (error) {
       console.error("Ошибка получения истории сообщений:", error);
-      callback({ success: false, error: error.message });
+      callback({
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 

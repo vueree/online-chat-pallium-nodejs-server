@@ -54,9 +54,8 @@ router.post("/send", authenticateToken, async (req, res) => {
   }
 });
 
-// Получение всех сообщений с пагинацией
 router.get("/messages", authenticateToken, async (req, res) => {
-  const { page = 1, limit = 10 } = req.query; // Параметры пагинации
+  const { page = 1, limit = 10 } = req.query;
 
   const pageNumber = parseInt(page, 10);
   const limitNumber = parseInt(limit, 10);
@@ -65,40 +64,54 @@ router.get("/messages", authenticateToken, async (req, res) => {
     isNaN(pageNumber) ||
     isNaN(limitNumber) ||
     pageNumber <= 0 ||
-    limitNumber <= 0
+    limitNumber <= 0 ||
+    limitNumber > 100
   ) {
-    return res
-      .status(400)
-      .json({ message: "Некорректные параметры пагинации" });
+    return res.status(400).json({
+      message: "Некорректные параметры пагинации",
+      details: {
+        page: pageNumber,
+        limit: limitNumber
+      }
+    });
   }
 
   try {
-    // Подсчет общего количества сообщений
     const totalMessages = await prisma.message.count();
     const totalPages = Math.ceil(totalMessages / limitNumber);
 
-    // Вычисляем, с какого сообщения начать выборку для текущей страницы
-    const skip = (pageNumber - 1) * limitNumber; // Для страницы 1 это будет 0
+    const skip = (pageNumber - 1) * limitNumber;
     const take = limitNumber;
 
-    // Получаем сообщения в правильном порядке (от старых к новым)
     const messages = await prisma.message.findMany({
       skip,
       take,
-      orderBy: { timestamp: "asc" }, // Порядок от старых к новым
-      include: { sender: { select: { username: true } } }
+      orderBy: { timestamp: "desk" },
+      include: {
+        sender: {
+          select: {
+            username: true,
+            id: true
+          }
+        }
+      }
     });
 
-    // Отправляем данные о сообщениях и пагинации
     res.status(200).json({
       currentPage: pageNumber,
-      totalPages: totalPages,
-      totalMessages: totalMessages,
-      messages: messages
+      totalPages,
+      totalMessages,
+      messages: messages.map((msg) => ({
+        ...msg,
+        username: msg.sender?.username || "Anonymous"
+      }))
     });
   } catch (error) {
     console.error("Ошибка получения сообщений:", error);
-    res.status(500).json({ message: "Ошибка получения сообщений" });
+    res.status(500).json({
+      message: "Ошибка получения сообщений",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
   }
 });
 
