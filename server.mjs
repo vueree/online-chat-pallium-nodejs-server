@@ -17,7 +17,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 app.use(express.json());
 const corsOptions = {
-  origin: ["http://localhost:5173", "https://pallium.onrender.com"],
+  origin: "*",
   methods: ["GET", "POST", "DELETE"],
   credentials: true
 };
@@ -38,10 +38,11 @@ chatNamespace.on("connection", (socket) => {
   console.log("User connected to chat");
 
   socket.on("message_history", async (data, callback) => {
+    console.log("Received message_history request");
     console.log("[DEBUG] Message History Request:", data);
 
     try {
-      const { page = 1, perPage = 10 } = data;
+      const { page = 1, perPage = 20 } = data;
 
       console.log(`[DEBUG] Pagination Parameters:`, { page, perPage });
 
@@ -65,7 +66,7 @@ chatNamespace.on("connection", (socket) => {
       const messages = await prisma.message.findMany({
         skip: (page - 1) * perPage,
         take: perPage,
-        orderBy: { timestamp: "asc" },
+        orderBy: { timestamp: "desc" },
         include: {
           sender: {
             select: {
@@ -98,6 +99,7 @@ chatNamespace.on("connection", (socket) => {
   });
 
   socket.on("send_message", async (data) => {
+    console.log("Received send_message request");
     try {
       console.log("Received message on server:", data);
       const { message, username } = data;
@@ -121,6 +123,13 @@ chatNamespace.on("connection", (socket) => {
         message: newMessage.message,
         timestamp: newMessage.timestamp
       });
+
+      // Пересчитываем общее количество страниц и уведомляем клиентов
+      const totalMessages = await prisma.message.count();
+      const perPage = 10; // Убедитесь, что значение совпадает с клиентским
+      const totalPages = Math.ceil(totalMessages / perPage);
+
+      chatNamespace.emit("update_total_pages", { totalPages });
     } catch (error) {
       console.error("Ошибка при отправке сообщения:", error);
     }
