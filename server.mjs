@@ -29,88 +29,47 @@ app.use("/chat", chatRoutes);
 connectDB();
 
 const PORT = process.env.PORT || 3000;
+
 const httpServer = createServer(app);
 const io = new Server(httpServer, { cors: corsOptions });
 
 const chatNamespace = io.of("/chat");
 
+// Middleware для проверки JWT токена в WebSocket соединении
+chatNamespace.use((socket, next) => {
+  const token = socket.handshake.auth.token;
+  if (!token) {
+    return next(new Error("Authentication error"));
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    socket.userId = decoded.userId;
+    next();
+  } catch (err) {
+    next(new Error("Invalid token"));
+  }
+});
+
 chatNamespace.on("connection", (socket) => {
-  console.log("User connected to chat");
+  console.log("User connected to chat:", socket.id);
 
-  socket.on("message_history", async (data, callback) => {
-    console.log("Received message_history request");
-    console.log("[DEBUG] Message History Request:", data);
-
-    try {
-      const { page = 1, perPage = 20 } = data;
-
-      console.log(`[DEBUG] Pagination Parameters:`, { page, perPage });
-
-      if (page <= 0 || perPage <= 0 || perPage > 100) {
-        console.error(`[ERROR] Invalid Pagination:`, { page, perPage });
-        return callback({
-          success: false,
-          error: "Invalid pagination parameters",
-          details: { page, perPage }
-        });
-      }
-
-      console.time("[PERFORMANCE] WS Message History");
-
-      const totalMessages = await prisma.message.count();
-      console.log(`[DEBUG] Total Messages:`, totalMessages);
-
-      const totalPages = Math.ceil(totalMessages / perPage);
-      console.log(`[DEBUG] Total Pages:`, totalPages);
-
-      const messages = await prisma.message.findMany({
-        skip: (page - 1) * perPage,
-        take: perPage,
-        orderBy: { timestamp: "desc" },
-        include: {
-          sender: {
-            select: {
-              username: true,
-              id: true
-            }
-          }
-        }
-      });
-
-      console.log(`[DEBUG] Fetched Messages Count:`, messages.length);
-      console.timeEnd("[PERFORMANCE] WS Message History");
-
-      callback({
-        success: true,
-        messages: messages.map((msg) => ({
-          ...msg,
-          username: msg.sender?.username || "Anonymous"
-        })),
-        page,
-        totalPages
-      });
-    } catch (error) {
-      console.error("[ERROR] WS Message History Error:", error);
-      callback({
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
-
+  // Обработка только отправки новых сообщений через WebSocket
   socket.on("send_message", async (data) => {
-    console.log("Received send_message request");
     try {
-      console.log("Received message on server:", data);
-      const { message, username } = data;
+      const { message } = data;
 
-      const user = await prisma.user.findUnique({ where: { username } });
+      // Получаем информацию о пользователе
+      const user = await prisma.user.findUnique({
+        where: { id: socket.userId }
+      });
 
       if (!user) {
-        console.error("Пользователь не найден");
+        console.error("User not found");
         return;
       }
 
+      // Сохраняем сообщение в базе данных
       const newMessage = await prisma.message.create({
         data: {
           senderId: user.id,
@@ -118,38 +77,34 @@ chatNamespace.on("connection", (socket) => {
         }
       });
 
+      // Отправляем новое сообщение всем подключенным клиентам
       chatNamespace.emit("new_message", {
+        id: newMessage.id,
         username: user.username,
         message: newMessage.message,
         timestamp: newMessage.timestamp
       });
-
-      // Пересчитываем общее количество страниц и уведомляем клиентов
-      const totalMessages = await prisma.message.count();
-      const perPage = 10; // Убедитесь, что значение совпадает с клиентским
-      const totalPages = Math.ceil(totalMessages / perPage);
-
-      chatNamespace.emit("update_total_pages", { totalPages });
     } catch (error) {
-      console.error("Ошибка при отправке сообщения:", error);
+      console.error("Error sending message:", error);
+      socket.emit("error", { message: "Failed to send message" });
     }
   });
 
   socket.on("disconnect", () => {
-    console.log("User disconnected from chat namespace:", socket.id);
+    console.log("User disconnected from chat:", socket.id);
   });
 });
 
 const startServer = async () => {
   try {
     await prisma.$connect();
-    console.log("База данных подключена успешно");
+    console.log("Database connected successfully");
 
     httpServer.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });
   } catch (error) {
-    console.error("Ошибка подключения к базе данных:", error);
+    console.error("Database connection error:", error);
     process.exit(1);
   }
 };
