@@ -7,6 +7,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { prisma } from "./prismaClient.js";
 import { connectDB } from "./db.js";
+import jwt from "jsonwebtoken";
 import authRoutes from "./routes/authRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
 
@@ -35,18 +36,25 @@ const io = new Server(httpServer, { cors: corsOptions });
 
 const chatNamespace = io.of("/chat");
 
-// Middleware для проверки JWT токена в WebSocket соединении
 chatNamespace.use((socket, next) => {
   const token = socket.handshake.auth.token;
   if (!token) {
+    console.log("No token provided in socket auth");
     return next(new Error("Authentication error"));
   }
 
   try {
+    if (!process.env.JWT_SECRET) {
+      console.error("JWT_SECRET not configured");
+      return next(new Error("Server configuration error"));
+    }
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     socket.userId = decoded.userId;
+    console.log("Socket authentication successful for user:", decoded.userId);
     next();
   } catch (err) {
+    console.error("JWT verification failed:", err);
     next(new Error("Invalid token"));
   }
 });
