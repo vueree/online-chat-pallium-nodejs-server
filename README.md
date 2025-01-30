@@ -64,11 +64,11 @@ yarn lint
 
 ## API Routes
 
-# Authentication
+### Authentication
 	•	POST /api/auth/register – Register a new user.
 	•	POST /api/auth/login – Authenticate user and return JWT token.
 
-# Chat
+### Chat
 	•	GET /api/chat – Get chat history.
 	•	POST /api/chat – Send a message.
 
